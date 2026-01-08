@@ -8,14 +8,21 @@
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["dnd", "rpg", "multiplayer", "socket.io"],
+  "keywords": [
+    "dnd",
+    "rpg",
+    "multiplayer",
+    "socket.io"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
     "cors": "^2.8.5",
-    "openai": "^4.20.1",
+    "@supabase/supabase-js": "^2.39.0",
+    "@anthropic-ai/sdk": "^0.32.1",
+    "dotenv": "^16.3.1",
     "uuid": "^9.0.1"
   }
 }
