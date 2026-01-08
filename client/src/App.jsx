@@ -4,7 +4,9 @@ import GameRoom from './components/GameRoom';
 import Lobby from './components/Lobby';
 import './App.css';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+// In production, connect to the same host. In development, use localhost:3000
+const SERVER_URL = import.meta.env.VITE_SERVER_URL ||
+  (window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -45,7 +47,7 @@ function App() {
   const handleCreateRoom = (name) => {
     setPlayerName(name);
     socket.emit('createRoom', { playerName: name });
-    
+
     socket.once('roomCreated', (roomData) => {
       setRoom(roomData);
     });
@@ -54,7 +56,7 @@ function App() {
   const handleJoinRoom = (roomId, name) => {
     setPlayerName(name);
     socket.emit('joinRoom', { roomId, playerName: name });
-    
+
     socket.once('roomJoined', (roomData) => {
       setRoom(roomData);
     });
