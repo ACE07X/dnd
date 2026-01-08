@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -6,7 +7,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { handleConnection } from './socketHandler.js';
-import { generateAreaDescription, generateNPCDialogue } from './ai.js';
+import {
+  generateAreaDescription,
+  generateNPCDialogue,
+  generateCombatFlavor,
+  generateSessionSummary,
+  generateQuestHook
+} from './ai.js';
+import { supabaseAdmin } from './supabase.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,11 +72,91 @@ app.post('/api/ai/npc-dialogue', async (req, res) => {
   }
 });
 
+app.post('/api/ai/combat-flavor', async (req, res) => {
+  try {
+    const { combatEvent } = req.body;
+    if (!combatEvent) {
+      return res.status(400).json({ error: 'Combat event is required' });
+    }
+    const flavor = await generateCombatFlavor(combatEvent);
+    res.json({ flavor });
+  } catch (error) {
+    console.error('AI endpoint error:', error);
+    res.status(500).json({ error: 'Failed to generate combat flavor' });
+  }
+});
+
+app.post('/api/ai/session-summary', async (req, res) => {
+  try {
+    const { events, highlights } = req.body;
+    if (!events || !Array.isArray(events)) {
+      return res.status(400).json({ error: 'Events array is required' });
+    }
+    const summary = await generateSessionSummary(events, highlights || {});
+    res.json({ summary });
+  } catch (error) {
+    console.error('AI endpoint error:', error);
+    res.status(500).json({ error: 'Failed to generate summary' });
+  }
+});
+
+app.post('/api/ai/quest-hook', async (req, res) => {
+  try {
+    const { context, questType } = req.body;
+    const hook = await generateQuestHook(context || {}, questType || 'mystery');
+    res.json({ hook });
+  } catch (error) {
+    console.error('AI endpoint error:', error);
+    res.status(500).json({ error: 'Failed to generate quest hook' });
+  }
+});
+
+// Database endpoints
+app.get('/api/classes', async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('character_classes')
+      .select('*');
+    if (error) throw error;
+    res.json({ classes: data });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to fetch classes' });
+  }
+});
+
+app.get('/api/items', async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('items')
+      .select('*');
+    if (error) throw error;
+    res.json({ items: data });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to fetch items' });
+  }
+});
+
+app.get('/api/rooms', async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('game_rooms')
+      .select('*')
+      .eq('status', 'waiting');
+    if (error) throw error;
+    res.json({ rooms: data });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ error: 'Failed to fetch rooms' });
+  }
+});
+
 // Serve static files from React build (production) - must be after API routes
 const clientDistPath = path.join(__dirname, '../client/dist');
 if (process.env.NODE_ENV === 'production' && existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
-  
+
   // Fallback to React app for client-side routing
   app.get('*', (req, res, next) => {
     // Skip API routes and Socket.IO
