@@ -1,0 +1,16 @@
+{
+  "name": "dnd-tabletop-rpg",
+  "version": "1.0.0",
+  "description": "Multiplayer D&D-style tabletop RPG",
+  "private": true,
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build:client": "cd client && npm run build",
+    "start": "cd server && npm start"
+  },
+  "keywords": ["dnd", "rpg", "multiplayer", "tabletop"],
+  "author": "",
+  "license": "MIT"
+}
